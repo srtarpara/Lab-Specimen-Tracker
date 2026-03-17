@@ -74,4 +74,52 @@ def create_specimen(specimen: SpecimenCreate):
 
     return {"message": "Specimen created", "id": new_id}
     
+class StatusUpdate(BaseModel):
+    new_status: str
+    updated_by: int
+
+@app.put("/specimens/{specimen_id}/status")
+def update_status(specimen_id: int, update: StatusUpdate):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT status FROM specimens WHERE id = %s", (specimen_id,))
+    row = cursor.fetchone()
+
+    if row is None:
+        return {"error": "Specimen not found"}
     
+    old_status = row[0]
+
+    cursor.execute("""
+                   UPDATE specimens SET status = %s WHERE id = %s
+                """, (update.new_status, specimen_id))
+    
+    cursor.execute("""
+                   INSERT INTO specimen_log (specimen_id, updated_by, old_status, new_status)
+                   VALUES (%s, %s, %s, %s)
+                """, (specimen_id, update.updated_by, old_status, update.new_status))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return {"message": f"Status updated from {old_status} to {update.new_status}"}
+
+@app.get("/specimens/{specimen_id}/log")
+def get_specimen_log(specimen_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+                   SELECT s1.id, u.name as updated_by, s1.old_status, s1.new_status, s1.timestamp
+                   FROM specimen_log s1
+                   JOIN users u ON s1.updated_by = u.id
+                   WHERE s1.specimen_id = %s
+                   ORDER BY s1.timestamp ASC
+                """, (specimen_id,))
+    
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return {"log": rows}
