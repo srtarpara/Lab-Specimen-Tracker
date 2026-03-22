@@ -1,11 +1,12 @@
 import {useState, useEffect} from 'react';
+import API_BASE from '../api';
 
 function PatientList({onSelectPatient, refresh}){
     const [patients, setPatients] = useState([]);
     const [search, setSearch] = useState('');
 
     useEffect(() => {
-        fetch("http://localhost:8000/patients")
+        fetch(`${API_BASE}/patients`)
         .then(response => response.json())
         .then(data => setPatients(data.patients))
     }, [refresh]);

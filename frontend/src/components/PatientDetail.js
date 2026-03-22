@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import API_BASE from '../api';
 
 function formatDate(dateString) {
     const date = new Date(dateString);
@@ -23,7 +24,7 @@ function PatientDetail({ patient, onBack, onSelectSpecimen }) {
     const [specimens, setSpecimens] = useState([]);
 
     useEffect(() => {
-        fetch(`http://localhost:8000/patients/${patient[0]}/specimens`)
+        fetch(`${API_BASE}/patients/${patient[0]}/specimens`)
             .then(response => response.json())
             .then(data => setSpecimens(data.specimens))
     }, [patient]);

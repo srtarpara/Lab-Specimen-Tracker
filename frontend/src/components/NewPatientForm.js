@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import API_BASE from '../api';
 
 function NewPatientForm({ onPatientCreated }) {
     const [name, setName] = useState('');
@@ -14,7 +15,7 @@ function NewPatientForm({ onPatientCreated }) {
             return;
         }
 
-        fetch('http://localhost:8000/patients', {
+        fetch(`${API_BASE}/patients`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

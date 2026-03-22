@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import API_BASE from '../api';
 
 function NewSpecimenForm({onSpecimenCreated}){
     const [patientId, setPatientId] = useState('');
@@ -12,7 +13,7 @@ function NewSpecimenForm({onSpecimenCreated}){
             return;
         }
 
-        fetch("http://localhost:8000/specimens", {
+        fetch("${API_BASE}/specimens", {
             method: 'POST',
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({

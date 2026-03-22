@@ -1,4 +1,5 @@
 import {useState, useEffect} from 'react';
+import API_BASE from '../api';
 
 const STATUS_STEPS = ['Collected', 'Received', 'Processing', 'Resulted', 'Verified']
 
@@ -29,13 +30,13 @@ function SpecimenDetail({specimenId, onBack, user}){
     }, [specimenId]);
 
     function fetchSpecimen(){
-        fetch(`http://localhost:8000/specimens/${specimenId}`)
+        fetch(`${API_BASE}/specimens/${specimenId}`)
         .then(r => r.json())
         .then(data => setSpecimen(data.specimen));
     }
 
     function fetchLog(){
-        fetch(`http://localhost:8000/specimens/${specimenId}/log`)
+        fetch(`${API_BASE}/specimens/${specimenId}/log`)
         .then(r => r.json())
         .then(data => setLog(data.log));
     }
@@ -46,7 +47,7 @@ function SpecimenDetail({specimenId, onBack, user}){
             return;
         }
 
-        fetch(`http://localhost:8000/specimens/${specimenId}/status`,{
+        fetch(`${API_BASE}/specimens/${specimenId}/status`,{
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({new_status: newStatus, updated_by: user.id})
