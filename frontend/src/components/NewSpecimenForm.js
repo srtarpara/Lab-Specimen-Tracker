@@ -13,7 +13,7 @@ function NewSpecimenForm({onSpecimenCreated}){
             return;
         }
 
-        fetch("${API_BASE}/specimens", {
+        fetch(`${API_BASE}/specimens`, {
             method: 'POST',
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
