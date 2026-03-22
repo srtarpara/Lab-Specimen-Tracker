@@ -27,6 +27,7 @@ function SpecimenDetail({specimenId, onBack, user}){
     useEffect(() => {
         fetchSpecimen();
         fetchLog();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [specimenId]);
 
     function fetchSpecimen(){
