@@ -1,10 +1,11 @@
-from fastapi import FastAPI
-from database import get_connection
-from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI                             #Imports the FastAPI framework - turns the python file into a web server that can recieve HTTP requests
+from database import get_connection                     #Imports the get_connection function that was written in database.py. This is how every endpoint gets access to the database.
+from pydantic import BaseModel                          #Imports the BaseModel class that defines what shape the incomming request data should be. If someone sends the wrong data type then FastAPI will automatically reject it.
+from fastapi.middleware.cors import CORSMiddleware      #Imports the CORS middleware which is like a bouncer that controls which domains are allowed to make requests to the API.
 
-app = FastAPI()
+app = FastAPI()     #Creates the FastAPI application. Everything else hangs off this app object, every route, every middleware, everything.
 
+#Registers the CORS bouncer on the app. Only localhost and the Vercel URL are on the guest list and every other domain gets blocked.
 app.add_middleware(
     CORSMiddleware,
     allow_origins = ["http://localhost:3000",
@@ -14,10 +15,12 @@ app.add_middleware(
     allow_headers = ["*"],
 )
 
+#Root Endpoint - A simple health check endpoint.
 @app.get("/")
 def root():
     return {"message": "Specimen Tracker API is running!"}
 
+#Get /patients - returns all patients in the patients table. The data is returned as a JSON data type.
 @app.get("/patients")
 def get_patients():
     conn = get_connection()
@@ -29,6 +32,7 @@ def get_patients():
 
     return {"patients": rows}
 
+#Get /specimens - returns all specimens in the specimens table. The data is returned as a JSON data type.
 @app.get("/specimens")
 def get_specimens():
     conn = get_connection()
@@ -45,6 +49,7 @@ def get_specimens():
 
     return {"specimens": rows}
 
+#Get /specimens/{specimen_id} - returns a specific specimen by using the specimen id from the specimen table. The data is returned as a JSON data type.
 @app.get("/specimens/{specimen_id}")
 def get_specific_specimen(specimen_id: int):
     conn = get_connection()
@@ -64,11 +69,13 @@ def get_specific_specimen(specimen_id: int):
 
     return {"specimen": row}
 
+#This class defines the shape of the data we expect when someone creates a specimen. FastAPI uses this to automatically validate incoming requests.
 class SpecimenCreate(BaseModel):
     patient_id: int
     type: str
     collected_by: int
 
+#Post /specimens - Takes the input from the user and inserts it into the specimen table as a new row and it does the same thing to the audit table.
 @app.post("/specimens")
 def create_specimen(specimen: SpecimenCreate):
     conn = get_connection()
@@ -90,11 +97,13 @@ def create_specimen(specimen: SpecimenCreate):
     conn.close()
 
     return {"message": "Specimen created", "id": new_id}
-    
+
+#This class defines what data is expected when updating a status.
 class StatusUpdate(BaseModel):
     new_status: str
     updated_by: int
 
+#Put /specimens/{specimen_id}/status - Updates the specimen status in the specimens table and adds a new entry to the specimen_log table.
 @app.put("/specimens/{specimen_id}/status")
 def update_status(specimen_id: int, update: StatusUpdate):
     conn = get_connection()
@@ -123,6 +132,7 @@ def update_status(specimen_id: int, update: StatusUpdate):
 
     return {"message": f"Status updated from {old_status} to {update.new_status}"}
 
+#Get /specimens/{specimen_id}/log - Returns the specimen log for a specific specimen based on specimen_id.
 @app.get("/specimens/{specimen_id}/log")
 def get_specimen_log(specimen_id: int):
     conn = get_connection()
@@ -141,6 +151,7 @@ def get_specimen_log(specimen_id: int):
 
     return {"log": rows}
 
+#Get /patients/{patient_id}/specimens - returns all the specimens corresponding to a particular patient. The data is returned as a JSON data type.
 @app.get("/patients/{patient_id}/specimens")
 def get_patient_specimens(patient_id: int):
     conn = get_connection()
@@ -158,11 +169,13 @@ def get_patient_specimens(patient_id: int):
 
     return {"specimens": rows}
 
+#This class defines the shape of the data we expect when someone creates a patient. FastAPI uses this to automatically validate incoming requests.
 class PatientCreate(BaseModel):
     name: str
     date_of_birth: str
     medical_record_number: str
 
+#Post /patients - adds a new patient to the patients table. If not successfully then the table is rolled back to the previosu version.
 @app.post("/patients")
 def create_patient(patient: PatientCreate):
     conn = get_connection()
@@ -186,10 +199,12 @@ def create_patient(patient: PatientCreate):
         conn.close()
         return {"message": "MRN already exists"}
 
+#This class defines the shape of the data we expect when someone trys to login. FastAPI uses this to automatically validate incoming requests.
 class LoginRequest(BaseModel):
     email: str
     password: str
 
+#Post /login - takes into account a username and password from the user and checks if it is valid in the user table. If so then the user can log in and if not then they can try again.
 @app.post("/login")
 def login(request: LoginRequest):
     conn = get_connection()
