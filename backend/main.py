@@ -2,6 +2,7 @@ from fastapi import FastAPI                             #Imports the FastAPI fra
 from database import get_connection                     #Imports the get_connection function that was written in database.py. This is how every endpoint gets access to the database.
 from pydantic import BaseModel                          #Imports the BaseModel class that defines what shape the incomming request data should be. If someone sends the wrong data type then FastAPI will automatically reject it.
 from fastapi.middleware.cors import CORSMiddleware      #Imports the CORS middleware which is like a bouncer that controls which domains are allowed to make requests to the API.
+from passlib.context import CryptContext                #Imports the CryptContext class from the passlib library. CryptContext is the tool that handles all password hashing and verification.
 
 app = FastAPI()     #Creates the FastAPI application. Everything else hangs off this app object, every route, every middleware, everything.
 
@@ -207,12 +208,14 @@ class LoginRequest(BaseModel):
 #Post /login - takes into account a username and password from the user and checks if it is valid in the user table. If so then the user can log in and if not then they can try again.
 @app.post("/login")
 def login(request: LoginRequest):
+    pwd_context = CryptContext(schemes=["bcrypt"])
+    
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-                   SELECT id, name, email, role
-                   FROM users WHERE email = %s AND password = %s
-                   """, (request.email, request.password))
+                   SELECT id, name, email, password, role
+                   FROM users WHERE email = %s
+                   """, (request.email,))
     user = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -220,11 +223,14 @@ def login(request: LoginRequest):
     if user is None:
         return {"error": "Invalid email or password"}
     
+    if not pwd_context.verify(request.password, user[3]):
+        return {"error": "Invalid email or password"}
+    
     return{
         "user": {
             "id": user[0],
             "name": user[1],
             "email": user[2],
-            "role": user[3]
+            "role": user[4]
         }
     }

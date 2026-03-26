@@ -23,12 +23,15 @@ cursor.execute("ALTER SEQUENCE specimen_log_id_seq RESTART WITH 1")
 
 # Create users
 password = "password123"
+
+hashed_password = pwd_context.hash(password)
+
 users = [
-    ("Alice Nurse", "alice@hospital.com", password, "nurse"),
-    ("Bob LabTech", "bob@hospital.com", password, "lab_tech"),
-    ("Carol Pathologist", "carol@hospital.com", password, "pathologist"),
-    ("David Nurse", "david@hospital.com", password, "nurse"),
-    ("Eve LabTech", "eve@hospital.com", password, "lab_tech"),
+    ("Alice Nurse", "alice@hospital.com", hashed_password, "nurse"),
+    ("Bob LabTech", "bob@hospital.com", hashed_password, "lab_tech"),
+    ("Carol Pathologist", "carol@hospital.com", hashed_password, "pathologist"),
+    ("David Nurse", "david@hospital.com", hashed_password, "nurse"),
+    ("Eve LabTech", "eve@hospital.com", hashed_password, "lab_tech"),
 ]
 
 cursor.executemany("""
