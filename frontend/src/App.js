@@ -7,6 +7,7 @@ import NewSpecimenForm from './components/NewSpecimenForm';
 import Login from './components/Login';
 import PatientDetail from './components/PatientDetail';
 import NewPatientForm from './components/NewPatientForm';
+import AdminPage from './components/AdminPage';
 
 function App() {
   const [selectedSpecimen, setSelectedSpecimen] = useState(null);
@@ -71,6 +72,21 @@ function App() {
                         >
                             Patients
                         </button>
+                        {user.role === 'lis' && (
+                            <button onClick= {() => setPage('admin')}
+                            style={{
+                                padding: '8px 16px',
+                                backgroundColor: page === 'admin' ? '#2c3e7a' : 'transparent',
+                                color: page === 'admin' ? 'white' : '#2c3e7a',
+                                border: '2px solid #2c3e7a',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold'
+                            }}
+                            >
+                                Admin
+                            </button>
+                        )}
                     </nav>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -130,6 +146,8 @@ function App() {
                     </>
                 )
             )}
+
+            {page === 'admin' && <AdminPage />}
         </div>
     );
 }

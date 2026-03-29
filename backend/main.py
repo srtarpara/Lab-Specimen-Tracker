@@ -192,7 +192,7 @@ def create_patient(patient: PatientCreate):
         cursor.close()
         conn.close()
 
-        return {"message": "Specimen created", "id": new_id}
+        return {"message": "Patient created", "id": new_id}
     
     except Exception as e:
         conn.rollback()
@@ -234,3 +234,71 @@ def login(request: LoginRequest):
             "role": user[4]
         }
     }
+
+#Get /users - returns all users in the user table. The data is returned as a JSON data type.
+@app.get("/users")
+def get_users():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users ORDER BY id ASC")
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return {"users": rows}
+
+#This class defines the shape of the data we expect when someone creates a patient. FastAPI uses this to automatically validate incoming requests.
+class UserCreate(BaseModel):
+    name: str
+    email: str
+    password: str
+    role: str
+
+
+#Post /users - adds a new user to the user table. If not successfully then the table is rolled back to the previous version.
+@app.post("/users")
+def create_user(user: UserCreate):
+    pwd_context = CryptContext(schemes=["bcrypt"])
+
+    password_hash = pwd_context.hash(user.password)
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+                   INSERT INTO users (name, email, password, role)
+                   VALUES (%s, %s, %s, %s)
+                   RETURNING id
+                """, (user.name, user.email, password_hash, user.role))
+        new_id = cursor.fetchone()[0]
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return {"message": "User created", "id": new_id}
+    
+    except Exception as e:
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        return {"message": "User already exists"}
+
+#Get /user/{user_id} - returns the data for a specific user.
+@app.get("/users/{user_id}")
+def get_user(user_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+                    SELECT name, email, role
+                    FROM users
+                    WHERE id = %s
+                   """, (user_id,))
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if row is None:
+        return {"error": "User not found"}
+
+    return {"user": row}
+    
